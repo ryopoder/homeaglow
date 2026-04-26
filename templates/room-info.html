@@ -1,0 +1,127 @@
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
+>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Room Info</title>
+
+</head>
+<body>
+<section class="section">
+        <h1 class="title">Create a Chat Room</h1>
+        <br/>
+        <h2 class="subtitle">
+            Please provide the name and numbers to be used in this chatroom.
+        </h2>
+    <input id="roomName"
+  class="input is-normal"
+  type="text"
+  placeholder="Name for chat room"
+/><br/><br/>
+{#    <textarea id="phoneNumbers"#}
+{#  class="textarea"#}
+{#  placeholder="Input phone numbers separated by comma."#}
+{#  rows="10"#}
+{#></textarea>#}
+    
+    
+    <!-- Bulma Input and Button -->
+<div class="field has-addons">
+  <div class="control">
+    <input id="telInput" class="input" type="tel" pattern="[0-9]{10}" required placeholder="Enter phone number">
+  </div>
+    <p id="error-msg" class="help is-danger is-hidden">Please enter a 10-digit phone number.</p>
+  <div class="control">
+    <button class="button is-info" onclick="addNumber()">Add</button>
+  </div>
+</div>
+
+<!-- List Display -->
+<ul id="numberList"></ul>
+
+<!-- Output Area -->
+{#<p><span style="visibility: hidden" id="outputPhoneNumbers"></span></p>#}
+
+
+    
+    <button class="button is-primary" id="submitBtn" onclick="submitRoomData()">Create!</button>
+</section>
+</body>
+</html>
+<script>
+    
+      let numbers = [];
+      let phoneNumberString = '';
+async function submitRoomData() {
+    const btn = document.getElementById('submitBtn');
+    const name = document.getElementById('roomName').value;
+    {#const numbers = document.getElementById('outputPhoneNumbers').value;#}
+
+    // Show Bulma loading state
+    btn.classList.add('is-loading');
+
+    try {
+        const response = await fetch("{% url 'room-create_room' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}' // Required for Django POST requests
+            },
+            body: JSON.stringify({
+                name: name,
+                phone_numbers: phoneNumberString
+            })
+        });
+
+        if (response.ok) {
+            window.location.href = '/'; // Go home on success
+        } else {
+            const data = await response.json();
+            alert("Error: " + JSON.stringify(data));
+        }
+    } catch (error) {
+        console.error("Submission failed", error);
+    } finally {
+        btn.classList.remove('is-loading');
+    }
+}
+
+
+
+  function addNumber() {
+    const input = document.getElementById('telInput');
+    const value = input.value.trim();
+    
+    if (value) {
+      numbers.push(value);
+      input.value = ''; // Clear input
+      
+      // Update DOM
+      document.getElementById('numberList').innerHTML = 
+        numbers.map(num => `<li>${num}</li>`).join('');
+        
+      // Update Output String
+      {#document.getElementById('outputPhoneNumbers').innerText = numbers.join(', ');#}
+      phoneNumberString = numbers.join(', ');
+    }
+  }
+  const phoneInput = document.getElementById('telInput');
+const errorMsg = document.getElementById('error-msg');
+
+phoneInput.addEventListener('input', () => {
+  // checkValidity() returns true only if the pattern is matched
+  if (phoneInput.checkValidity()) {
+    phoneInput.classList.remove('is-danger');
+    phoneInput.classList.add('is-success');
+    errorMsg.classList.add('is-hidden');
+  } else {
+    phoneInput.classList.add('is-danger');
+    phoneInput.classList.remove('is-success');
+    errorMsg.classList.remove('is-hidden');
+  }
+});
+
+</script>
